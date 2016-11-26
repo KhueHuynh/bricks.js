@@ -22,8 +22,8 @@ export default (options = {}) => {
   let nodeHeight
 
   let nodes
-  let nodesWidths
-  let nodesHeights
+  let nodesWidths = []
+  let nodesHeights = []
 
   // resolve options
 
@@ -34,6 +34,10 @@ export default (options = {}) => {
   const container = options.container.nodeType
     ? options.container
     : document.querySelector(options.container)
+
+  // can controll sizes object apply on window or container
+
+  const sizeApplyType = options.sizeType || 'window';
 
   const selectors = {
     all: () => toArray(container.children),
@@ -85,9 +89,21 @@ export default (options = {}) => {
 
   function getSizeIndex() {
     // find index of widest matching media query
-    return sizes
+
+    if (sizeApplyType === 'window') {
+      return sizes
       .map(size => size.mq && window.matchMedia(`(min-width: ${ size.mq })`).matches)
       .indexOf(true)
+    } else {
+      return sizes
+        .map((size) => {
+          let containerWidth = container.clientWidth,
+              sizeMinWidth = parseInt(size.mq);
+
+          return containerWidth >= sizeMinWidth;
+        })
+        .indexOf(true)
+    }
   }
 
   function setSizeIndex() {
@@ -119,8 +135,10 @@ export default (options = {}) => {
       return
     }
 
-    nodesWidths  = nodes.map(element => element.clientWidth)
-    nodesHeights = nodes.map(element => element.clientHeight)
+    nodes.map((element, index) => {
+      nodesWidths[index] = element.clientWidth;
+      nodesHeights[index] = element.clientHeight;
+    });
   }
 
   function setNodesStyles() {
@@ -156,7 +174,7 @@ export default (options = {}) => {
 
   function setContainerStyles() {
     container.style.position = 'relative'
-    container.style.width    = `${ sizeDetail.columns * nodesWidth + (sizeDetail.columns - 1) * sizeDetail.gutter }px`
+    // container.style.width    = `${ sizeDetail.columns * nodesWidths[0] + (sizeDetail.columns - 1) * sizeDetail.gutter }px`
     container.style.height   = `${ Math.max.apply(Math, columnHeights) - sizeDetail.gutter }px`
   }
 
